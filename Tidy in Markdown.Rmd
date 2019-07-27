@@ -1,0 +1,69 @@
+---
+title: "Tidy Practice"
+author: "Code Provided by Dr.Olga Scrivner and compiled by Nithya Vembu"
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+### Missing Values
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(readr)
+library(knitr)
+library(Hmisc)
+library(missForest)
+```
+## Missing Values
+
+```{r echo=FALSE}
+data("iris")
+```
+
+Set missing values ( 10% )
+```{r}
+iris.mis <- prodNA(iris, noNA = 0.1)
+kable(summary(iris.mis))
+```
+
+```{r}
+
+print(paste0("Missing Values:", sum(is.na(iris.mis)==TRUE)))
+```
+
+Impute with mean value
+
+```{r}
+
+
+iris.mis$imputed_age <- with(iris.mis, impute(Sepal.Length, mean))
+
+```
+Impute using argImpute
+```{r warning=FALSE, message=FALSE}
+
+impute_arg <- aregImpute(~ Sepal.Length + Sepal.Width + Petal.Length + Petal.Width +
+Species, data = iris.mis, n.impute = 5)
+```
+```{r}
+impute_arg
+impute_arg$imputed$Sepal.Length # check
+```
+
+```{r message=FALSE, warning=FALSE}
+religion = read_csv("C:/Users/nithyav/Downloads/R/R/religion_income.csv")
+```
+
+## Gather data from wide to long table
+```{r}
+kable(religion)
+```
+
+```{r}
+long <- religion %>% 
+  gather(income, freq, 2:11)
+kable(long[1:10,])
+```
+
