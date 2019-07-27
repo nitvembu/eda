@@ -1,0 +1,99 @@
+---
+title: "Plotting Systems and Graphic Devices"
+author: "Nithya Vembu"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r warning=FALSE, results="hide", output = FALSE, message=FALSE}
+if (!require("dplyr")) install.packages("dplyr")
+library(dplyr)
+library(nycflights13)
+library(tidyverse)
+if (!require("magrittr")) install.packages("magrittr")
+library(magrittr)
+if (!require("ggplot2")) install.packages("ggplot2")
+library(ggplot2)
+if (!require("lattice")) install.packages("lattice")
+library(lattice)
+if (!require("datasets")) install.packages("datasets")
+library(datasets)
+```
+
+##Plotting Systems
+#Base Plotting System
+
+The plot() function is used as a blank canvas to initiate the plot, and layers are added using additional functions like text, lines, points, axis.
+In the example, first a scatter plot is created and then a linear regression line is added to it.
+```{r}
+ data(airquality)
+ with(airquality, {
+   plot(Temp, Ozone)
+   lines(loess.smooth(Temp, Ozone))
+})
+```
+
+This is another example of how a base plot is constructed and then a later for annotation is added.
+
+```{r}
+data(cars)
+with(cars, plot(speed, dist))
+title("Speed vs. Stopping distance")
+```
+
+#The Lattice System
+
+Using the lattice R package, plots are created using single function calls to xyplot or bwplot. These plots are particularly useful for conditioning plots where change of y with x across z levels need to be examined.
+
+Below is an example of a lattice plot representing the relationship between life expectancy and income and how they vary by region in the U.S
+
+```{r}
+state <- data.frame(state.x77, region = state.region)
+xyplot(Life.Exp ~ Income | region, data = state, layout = c(4, 1))
+```
+
+# The ggplot2 System
+Implemented in the ggplot2 R package, it aims to mitigate the difference between base and lattice systems. Here, spacings, text and titles are automatically dealt with, and can be added to a plot as annotation.
+
+Below is an example of a qplot that quickly visualizes the data. The default settings offer many settings while customization is also available.
+
+```{r}
+data(mpg)
+qplot(displ, hwy, data = mpg)
+```
+
+##Graphics Devices
+
+Plots can be displayed on graphic devices such as a computer screen, or as a PDF, PNG or JPEG or scalable vector graphics (SVG) files.
+The graphic device can be decided based on the usability of the plot, the functionality such as where it will be used, where it will get printed, the size of the plot etc.
+
+To create a plot, the function is first decided (plot, xyplot, qplot etc) and annotation is added if required.
+
+```{r}
+with(faithful, plot(eruptions, waiting)) 
+title(main = "Old Faithful Geyser data")  
+```
+
+
+An alternative to displaying on a computer screen is to spcifiy the graphic device. In the below example, plot is saved to PDF file.
+
+```{r}
+pdf(file = "myplot.pdf")  
+with(faithful, plot(eruptions, waiting))  
+title(main = "Old Faithful Geyser data")
+dev.off() #close PDF
+```
+
+Plots can be copied from one device to another. In this example, it is copied from the screen to a PNG file.
+
+```{r}
+with(faithful, plot(eruptions, waiting))  
+title(main = "Old Faithful Geyser data")  
+dev.copy(png, file = "geyserplot.png")  
+dev.off() 
+```
+
+
+
