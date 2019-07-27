@@ -1,0 +1,136 @@
+---
+title: "Principal Component Analysis"
+author: "Nithya Vembu"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Principal Component Analysis (PCA)
+
+Source : https://www.datacamp.com/community/tutorials/pca-analysis-r
+
+```{r warning=FALSE, results="hide", output = FALSE, message=FALSE}
+if (!require("devtools")) install.packages("devtools")
+library(devtools)
+install_github("vqv/ggbiplot")
+library(ggbiplot)
+```
+
+When there are many variables, PCA allows to better visualize the variation present in the data. The function prcomp() is useful to compute principal components.
+
+```{r}
+mtcars.pca <- prcomp(mtcars[,c(1:7,10,11)], center = TRUE,scale. = TRUE)
+
+summary(mtcars.pca)
+```
+
+Using str(), the PCA object is examined closer. It can be seen that the PCA objects contains 1. the center point, scaling and standard deviation of every principal component, 2. the correlation between the original variables and the principal components, and 3.the values of each samples in terms of the principal components.
+
+```{r}
+str(mtcars.pca)
+```
+
+Plotting PCA - it is a biplot that shows how the variables relate to the principal components, and the position of each observation with respect to the PCs.
+
+```{r}
+ggbiplot(mtcars.pca)
+```
+
+Row names are added to the plot to make it more informative.
+
+```{r}
+ggbiplot(mtcars.pca, labels=rownames(mtcars))
+```
+
+Interpreting the results - three groups (Europe, Japan, US) are formed that are enclosed by ellipses. US cars are characterised by high cyl, wt and disp, while Japanese cars have high mpg. The European cars are not that tightly clustered.
+
+```{r}
+mtcars.country <- c(rep("Japan", 3), rep("US",4), rep("Europe", 7),rep("US",3), "Europe", rep("Japan", 3), rep("US",4), rep("Europe", 3), "US", rep("Europe", 3))
+
+ggbiplot(mtcars.pca,ellipse=TRUE,  labels=rownames(mtcars), groups=mtcars.country)
+```
+
+This plot shows Principal components 3 and 4. They explain very small percentage of the variation and are not very useful.
+
+```{r}
+ggbiplot(mtcars.pca,ellipse=TRUE,choices=c(3,4),   labels=rownames(mtcars), groups=mtcars.country)
+```
+
+Graphical parameters with ggbiplot - other customizations can be performed such as adding a circle to the center of the data as shown below.
+
+```{r}
+ggbiplot(mtcars.pca,ellipse=TRUE,circle=TRUE, labels=rownames(mtcars), groups=mtcars.country)
+```
+
+The samples and variables can be scaled.
+
+```{r}
+ggbiplot(mtcars.pca,ellipse=TRUE,obs.scale = 1, var.scale = 1,  labels=rownames(mtcars), groups=mtcars.country)
+```
+
+The arrows can be removed using var.axes.
+
+```{r}
+ggbiplot(mtcars.pca,ellipse=TRUE,obs.scale = 1, var.scale = 1,var.axes=FALSE,   labels=rownames(mtcars), groups=mtcars.country)
+```
+
+Customizing ggbiplot - customization can be done in a way similar to ggplot. Colors, titles and themes can be added.
+
+```{r}
+ggbiplot(mtcars.pca,ellipse=TRUE,obs.scale = 1, var.scale = 1,  labels=rownames(mtcars), groups=mtcars.country) +
+  scale_colour_manual(name="Origin", values= c("forest green", "red3", "dark blue"))+
+  ggtitle("PCA of mtcars dataset")+
+  theme_minimal()+
+  theme(legend.position = "bottom")
+```
+
+Adding a new sample - new samples can be added to the dataset and their relative position in relation to other samples can be examined.
+
+```{r}
+spacecar <- c(1000,60,50,500,0,0.5,2.5,0,1,0,0)
+
+mtcarsplus <- rbind(mtcars, spacecar)
+mtcars.countryplus <- c(mtcars.country, "Jupiter")
+
+mtcarsplus.pca <- prcomp(mtcarsplus[,c(1:7,10,11)], center = TRUE,scale. = TRUE)
+
+ggbiplot(mtcarsplus.pca, obs.scale = 1, var.scale = 1, ellipse = TRUE, circle = FALSE, var.axes=TRUE, labels=c(rownames(mtcars), "spacecar"), groups=mtcars.countryplus)+
+  scale_colour_manual(name="Origin", values= c("forest green", "red3", "violet", "dark blue"))+
+  ggtitle("PCA of mtcars dataset, with extra sample added")+
+  theme_minimal()+
+  theme(legend.position = "bottom")
+```
+
+
+Projecting a new sample onto the original PCA - in the above graph, the new sample has been considered as an outlier and the original correlation between some samples ceased to exist. For this, the new sample needs tobe projected onto the PCA.
+
+```{r}
+s.sc <- scale(t(spacecar[c(1:7,10,11)]), center= mtcars.pca$center)
+s.pred <- s.sc %*% mtcars.pca$rotation
+
+
+mtcars.plusproj.pca <- mtcars.pca
+mtcars.plusproj.pca$x <- rbind(mtcars.plusproj.pca$x, s.pred)
+
+
+ggbiplot(mtcars.plusproj.pca, obs.scale = 1, var.scale = 1, ellipse = TRUE, circle = FALSE, var.axes=TRUE, labels=c(rownames(mtcars), "spacecar"), groups=mtcars.countryplus)+
+  scale_colour_manual(name="Origin", values= c("forest green", "red3", "violet", "dark blue"))+
+  ggtitle("PCA of mtcars dataset, with extra sample projected")+
+  theme_minimal()+
+  theme(legend.position = "bottom")
+
+```
+
+The plot now looks more similar to the results before the new sample was added. 
+
+
+
+
+
+
+
+
+
+
+
