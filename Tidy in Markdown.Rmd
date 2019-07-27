@@ -7,6 +7,7 @@ author: "Code Provided by Dr.Olga Scrivner and compiled by Nithya Vembu"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
 ### Missing Values
 
 ```{r message=FALSE, warning=FALSE}
@@ -51,7 +52,7 @@ Species, data = iris.mis, n.impute = 5)
 impute_arg
 impute_arg$imputed$Sepal.Length # check
 ```
-
+Use attached religion_income.csv file.
 ```{r message=FALSE, warning=FALSE}
 religion = read_csv("C:/Users/nithyav/Downloads/R/R/religion_income.csv")
 ```
