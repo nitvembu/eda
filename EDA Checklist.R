@@ -1,4 +1,5 @@
 #Source: Chapter 4 from Peng R (2010) Exploratory data analysis with R. https://bookdown.org/rdpeng/exdata/exploratory-data-analysis-checklist.html
+#Data file is attached as ozone.csv.zip
 
 ##Step 1: Formulate question
 #Which counties in the US have the highest ozone pollution?
