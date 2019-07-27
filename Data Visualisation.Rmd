@@ -1,0 +1,543 @@
+---
+title: "Data Visualisation"
+author: "Nithya Vembu"
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Week 7 - Source: https://r4ds.had.co.nz/data-visualisation.html
+## Load libraries
+
+```{r warning=FALSE, results="hide", output = FALSE, message=FALSE}
+if (!require("tidyverse")) install.packages("tidyverse")
+library(tidyverse)
+data(mpg)
+```
+
+## Visualization
+
+The plot below shows the negative relationship between engine size (displ) and fuel efficiency (hwy).
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+```
+
+#Exercise 3.2.4
+
+#1. Run ggplot(data = mpg) what do you see?
+#Running ggplot(data=mpg) does not plot anything but the frame for the plot is shown.
+
+#2.  How many rows are in mtcars? How many columns?
+#mtcars has 11 columns
+
+#3. What does the drv variable describe? Read the help for ?mpg to find out.
+#drv: f = front wheel drive, r - rear wheel drive, 4 = 4wd
+```{r}
+ggplot(data=mpg)
+dim(mtcars)
+?mpg
+```
+
+
+#4. Make a scatterplot of hwy vs cyl.
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = hwy, y = cyl))
+
+```
+
+#5. What happens if you make a scatterplot of class vs drv. Why is the plot not useful?
+#The plot between class and drv is not useful and shows the mapping between these two columns since the attributes are categorical.
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = class, y = drv))
+
+```
+
+## Adding aesthetic mapping to visualization
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, color = class))
+```
+
+## Scaling
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, size = class))
+```
+
+#The alpha aesthetic controls the transparency of the points, and the shape aesthetic controls the shape of the points.
+
+```{r}
+# Left
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, alpha = class))
+
+# Right
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, shape = class))
+
+```
+
+#Customizing the color of the plot is an example of setting aesthetic properties of the geom manually
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy), color = "blue")
+```
+#Exercise 3.3.1
+#1. What's gone wrong with this code? Why are the points not blue?
+#In the first plot, the color is not specified within the aes mapping and instead the color plotted against an attribute called blue. Therefore, the points are not blue. The code is corrected in the second plot.
+```{r}
+ggplot(data = mpg) + geom_point(mapping = aes(x = displ, y = hwy, color = "blue"))
+ggplot(data = mpg) + geom_point(mapping = aes(x = displ, y = hwy), color = "blue")
+```
+
+#2. Which variables in mpg are categorical? Which variables are continuous? (Hint: type ?mpg to read the documentation for the dataset). How can you see this information when you run mpg?
+#The character (chr) columns are likely to be categorical.
+```{r}
+str(mpg)
+```
+
+#3. Map a continuous variable to color, size, and shape. How do these aesthetics behave differently for categorical vs. continuous variables?
+#Scale is shown for continuous variables and categories are shown for categorical variables.
+
+```{r}
+ggplot(data = mpg) + geom_point(mapping = aes(x = displ, y = hwy, color = cyl, size = hwy, shape = drv))
+```
+
+#4.What happens if you map the same variable to multiple aesthetics?
+#All aesthetic layers will be maintained.
+
+```{r}
+ggplot(data = mpg) + geom_point(mapping = aes(x = displ, y = hwy, color = cyl, size = cyl))
+```
+
+#5. What does the stroke aesthetic do? What shapes does it work with? (Hint: use ?geom_point)
+# Stroke aesthetic varies the width of the border of the points.
+
+```{r}
+ggplot(mtcars, aes(wt, mpg)) +
+  geom_point(shape = 21, colour = "black", fill = "white", size = 5, stroke = 3)
+```
+
+#6. What happens if you map an aesthetic to something other than a variable name, like aes(colour = displ < 5)? Note, you'll also need to specify x and y.
+# The aesthetic is applied to the condition..
+```{r}
+ggplot(data = mpg) + geom_point(mapping = aes(x = displ, y = hwy, colour = displ <5))
+```
+
+## Facets
+
+#Using facets, the plot can be split into subplots that each display one subset of data (useful for categorical variables).
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) + 
+  facet_wrap(~ class, nrow = 2)
+```
+#facet_grid can be used to create plots on combination of variables, where the first argument of the facet_grid() is a formula.
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) + 
+  facet_grid(drv ~ cyl)
+```
+
+#Exercise 3.5.1
+#1. What happens if you facet on a continuous variable?
+#A facet for each value in the continuous variable, is created.
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = cyl, y = hwy)) +
+  facet_wrap(~ displ)
+```
+
+#2. What do the empty cells in plot with facet_grid(drv ~ cyl) mean? How do they relate to this plot?
+# There is no data for that respective attribute combination. Example - rear wheel drive and 5 cylinder.
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = drv, y = cyl))
+```
+
+#3. What plots does the following code make? What does . do?
+#The "." is used when we do not want to facet a row or a column, and instead prints row-wise plots (in the first plot) or column-wise (in the second plot).
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(drv ~ .)
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(. ~ cyl)
+```
+
+
+#4.Take the first faceted plot in this section: What are the advantages to using faceting instead of the colour aesthetic? What are the disadvantages? How might the balance change if you had a larger dataset?
+# Faceting is useful when we want to examine the classes individually, while colouring is useful when we want to compare the distribution of classes overall. For larger datasets, coloring can be used.
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) + 
+  facet_wrap(~ class, nrow = 2)
+```
+
+#5.Read ?facet_wrap. What does nrow do? What does ncol do? What other options control the layout of the individual panels? Why doesn't facet_grid() have nrow and ncol arguments?
+#nrow returns number of rows in the dataframe and ncol returns number of columns. shrink and dir can be used to control the layout of the individual panels. The column and row lengths are implicit in Facet grids, and the rows and columns are determined the values rather than the columns lengths.
+
+```{r}
+?facet_wrap
+```
+
+#6.When using facet_grid() you should usually put the variable with more unique levels in the columns. Why? 
+It makes for better viewing, and screens are longer than wider. 
+
+## Geometric objects
+# Different geometrical objects can be used to represent data visually. In the plots below, the first one is represented using plots in a scatterplot, while in the second geom_smooth is used to represent data as lines.
+
+```{r}
+# left
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+
+# right
+ggplot(data = mpg) + 
+  geom_smooth(mapping = aes(x = displ, y = hwy))
+```
+
+#A different line type can be used for different classes using the mapping argument in the geom.
+```{r}
+ggplot(data = mpg) + 
+  geom_smooth(mapping = aes(x = displ, y = hwy, linetype = drv))
+```
+
+#Multiple rows of data can be displayed using a single geom object. One example is using the group aesthetic as shown in the second plot where data is grouped by the drv values in the mpg dataset.
+```{r}
+ggplot(data = mpg) +
+  geom_smooth(mapping = aes(x = displ, y = hwy))
+              
+ggplot(data = mpg) +
+  geom_smooth(mapping = aes(x = displ, y = hwy, group = drv))
+    
+ggplot(data = mpg) +
+  geom_smooth(
+    mapping = aes(x = displ, y = hwy, color = drv),
+    show.legend = FALSE
+  )
+```
+
+
+#Multiple geoms can be added to the same plot by adding multiple geom functions to the ggplot function.
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  geom_smooth(mapping = aes(x = displ, y = hwy))
+```
+
+#In order to avoid duplication of data, and having to change settings in two functions, global mappings can be set using the ggplot function. Furthermore, using the same mappings, different data can also be applied to different layers.
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(mapping = aes(color = class)) + 
+  geom_smooth(data = filter(mpg, class == "subcompact"), se = FALSE)
+```
+
+
+#Exercise 3.6.1
+#1.What geom would you use to draw a line chart? A boxplot? A histogram? An area chart?
+#geom_point and geom_line can be used to plot the data points and join them as lines.
+
+```{r}
+ggplot(data = mpg) +
+  geom_line(mapping = aes(x = displ, y = cty)) +
+  geom_point(mapping = aes(x = displ, y = cty))
+```
+
+#2. Run this code in your head and predict what the output will look like. Then, run the code in R and check your predictions.
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy, color = drv)) + 
+  geom_point() + 
+  geom_smooth(se = FALSE)
+
+# Prediction before running code - The code should produce scatter plot with displ vs hwy, and the coloring is based on the drv classes. There should be lines connecting the points.
+
+#3. What does show.legend = FALSE do? What happens if you remove it? Why do you think I used it earlier in the chapter?
+#show.legend = FALSE excludes this layer in the legends. The default is that it includes if any aesthetics are mapped.
+
+#4. What does the se argument to geom_smooth() do?
+# This adds a layer to show confidence interval.
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy, color = drv)) + 
+  geom_point() + 
+  geom_smooth(se = FALSE)
+```
+
+#5.Will these two graphs look different? Why/why not?
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  geom_smooth()
+
+ggplot() + 
+  geom_point(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_smooth(data = mpg, mapping = aes(x = displ, y = hwy))
+  
+#The two graphs will look the same, because in the first plot, the mappings are inherited from the ggplot(), whereas in the second one, they have been specified redundantly in the two geom functions.
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  geom_smooth()
+
+ggplot() + 
+  geom_point(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_smooth(data = mpg, mapping = aes(x = displ, y = hwy))
+
+```
+
+6. Recreate the R code necessary to generate the following graphs.
+
+```{r}
+
+if (!require("gridExtra")) install.packages("gridExtra")
+library(gridExtra)
+
+g1 <- ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point() +
+  geom_smooth(se = FALSE)
+g2 <- ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point() +
+  geom_smooth(mapping = aes(group = drv), se = FALSE)
+g3 <- ggplot(data = mpg, mapping = aes(x = displ, y = hwy, color=drv)) + 
+  geom_point() +
+  geom_smooth(se = FALSE)
+g4 <- ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(mapping = aes(color=drv)) +
+  geom_smooth(se = FALSE)
+g5 <- ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(mapping = aes(color=drv)) +
+  geom_smooth(se = FALSE, mapping = aes(linetype = drv))
+g6 <- ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(mapping = aes(color=drv)) + 
+  geom_point(shape = 21, color = "white", stroke = 1)
+
+grid.arrange(g1, g2, g3, g4, g5, g6, ncol=2, nrow = 3)
+
+```
+
+
+## Statistical transformations
+
+#Bar charts can be used to display counts with the use of the geom_bar object.
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut))
+```
+
+#stat_count() can be used in place of geom_bar to get the same plot as above.
+
+```{r}
+ggplot(data = diamonds) + 
+  stat_count(mapping = aes(x = cut))
+```
+
+# By using the geom_bar() with "identity", the height of the bars can be mapped to the raw values of the y variable.
+
+```{r}
+demo <- tribble(
+  ~cut,         ~freq,
+  "Fair",       1610,
+  "Good",       4906,
+  "Very Good",  12082,
+  "Premium",    13791,
+  "Ideal",      21551
+)
+
+ggplot(data = demo) +
+  geom_bar(mapping = aes(x = cut, y = freq), stat = "identity")
+
+```
+
+# By using stat_summary, other statistical values like mean, median etc can also be represented in the plot.
+
+```{r}
+ggplot(data = diamonds) + 
+  stat_summary(
+    mapping = aes(x = cut, y = depth),
+    fun.ymin = min,
+    fun.ymax = max,
+    fun.y = median
+  )
+```
+
+#Exercise 3.7.1
+#1. What is the default geom associated with stat_summary()? How could you rewrite the previous plot to use that geom function instead of the stat function?
+#geom_pointrange is associated with stat_summary
+```{r}
+ggplot(diamonds) +
+  geom_pointrange(aes(cut, depth, ymin = depth, ymax = depth))
+```
+
+#2.What does geom_col() do? How is it different to geom_bar()?
+#geom_col() uses stat_identity and leaves the as is, and represents the values in the data in the heights of the bars. However, geom_bar makes the height of the bars proportional to the count in each classes.
+
+#4. What variables does stat_smooth() compute? What parameters control its behaviour?
+#It computes the predicted value of y for each x. The 'method' controls the type of line, and 'se' shows or hides the confidence interval.
+
+#5. In our proportion bar chart, we need to set group = 1. Why? In other words what is the problem with these two graphs?
+#Setting group = 1 tells the function to calculate proportions from the overall counts. In the second plot, the color is set not being set for the individual color category.
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, y = ..prop..))
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = color, y = ..prop..))
+```
+
+
+## Position Adjustments
+#The color in the bar chart can be set by using the color aesthetic or 'fill'. 
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, colour = cut))
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = cut))
+
+```
+
+#Using the 'fill' aesthetic, the bars can be stacked based on a different variable.
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity))
+```
+
+#The position argument is used for position adjustment, and the three options are "identity", "dodge" or "fill". identity will place an object based on context. 
+
+```{r}
+ggplot(data = diamonds, mapping = aes(x = cut, fill = clarity)) + 
+  geom_bar(alpha = 1/5, position = "identity")
+ggplot(data = diamonds, mapping = aes(x = cut, colour = clarity)) + 
+  geom_bar(fill = NA, position = "identity")
+```
+
+#fill is useful for creating stacked bars and make comparison across groups.
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "fill")
+```
+
+# dodge will place objects beside one another and help is comparison of individual values.
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "dodge")
+```
+
+
+#When there is a problem of overplotting and it is hard to discern the points from one another, jitter is used with position, to introduce some random noise to each point. This will spread the points out.
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy), position = "jitter")
+```
+
+#Exercise 3.8.1
+#1. What is the problem with this plot? How could you improve it?
+# There is overplotting. It can be improved by using jitter.
+```{r}
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) + 
+  geom_point()
+
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) + 
+  geom_jitter()
+```
+
+#2. What parameters to geom_jitter() control the amount of jittering?
+#width and height
+
+#3. Compare and contrast geom_jitter() with geom_count().
+#geom_count sums the points in the area and modified the size of the point accordingly, while geom_jitter adds random noise to seperate values to avoid overplotting.
+
+#4. What's the default position adjustment for geom_boxplot()? Create a visualisation of the mpg dataset that demonstrates it.
+#dodge is the default position adjustment.
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = drv, y = cty)) + 
+  geom_boxplot()
+```
+
+## Coordinate systems
+#The default coordinate system is Cartesian.
+# The x and y axes can be switched using the coord_flip function.
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = class, y = hwy)) + 
+  geom_boxplot()
+ggplot(data = mpg, mapping = aes(x = class, y = hwy)) + 
+  geom_boxplot() +
+  coord_flip()
+```
+
+#Aspect ratio for maps can be set using coord_quickmaps
+```{r}
+nz <- map_data("nz")
+
+ggplot(nz, aes(long, lat, group = group)) +
+  geom_polygon(fill = "white", colour = "black")
+
+ggplot(nz, aes(long, lat, group = group)) +
+  geom_polygon(fill = "white", colour = "black") +
+  coord_quickmap()
+```
+
+#Instead of the default x and y coordinates, polar coordinates can also be used to represent data.
+
+```{r}
+bar <- ggplot(data = diamonds) + 
+  geom_bar(
+    mapping = aes(x = cut, fill = cut), 
+    show.legend = FALSE,
+    width = 1
+  ) + 
+  theme(aspect.ratio = 1) +
+  labs(x = NULL, y = NULL)
+
+bar + coord_flip()
+bar + coord_polar()
+```
+
+#Exercise 3.9.1
+#1.Turn a stacked bar chart into a pie chart using coord_polar()
+
+```{r}
+p <- ggplot(data = diamonds) + 
+  geom_bar(
+    mapping = aes(x = 1, fill = color),
+    width = 1) + 
+  theme(aspect.ratio = 1) +
+  labs(x = NULL, y = NULL)
+
+p + coord_polar(theta = "y")
+
+```
+
+
+#2. What does labs() do? Read the documentation.
+# It adds labels such as titles, subtitles etc.
+
+#3. What's the difference between coord_quickmap() and coord_map()?
+#coord_map converts spherical representation of earth into flat 2D plane while not preserving straight lines, whereas coord_quickmap preserves straight lines.
+
+#4.What does the plot below tell you about the relationship between city and highway mpg? Why is coord_fixed() important? What does geom_abline() do?
+# cty and hwy have a  linear positive relationship. coord_fixed maintains the slope of the line by keeping x and y in same units. geom_abline plots line with specified intercepts and coordinates (here is it intercept = 0 and slope = 1)
+```{r}
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) +
+  geom_point() + 
+  geom_abline() +
+  coord_fixed()
+```
+
+
+
+
+
+
