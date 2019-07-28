@@ -35,5 +35,5 @@ Source: https://uc-r.github.io/kmeans_clustering, https://uc-r.github.io/hc_clus
 Source: https://www.datacamp.com/community/tutorials/pca-analysis-r
 
 11. Model Diagnostics.Rmd : When regression models are created to do advance analysis on the data, there are always some underlying assumptions made. This file covers assessment of model assumptions and identification of outliers.
-Source: http://daviddalpiaz.github.io/appliedstats/model-diagnostics.html#unusual-observations
+Source: http://daviddalpiaz.github.io/appliedstats/model-diagnostics.html
 
