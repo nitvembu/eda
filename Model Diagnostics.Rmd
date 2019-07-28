@@ -1,0 +1,590 @@
+---
+title: "Model Diagnostics"
+author: "Nithya Vembu"
+---
+
+Source: http://daviddalpiaz.github.io/appliedstats/model-diagnostics.html#unusual-observations
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Model Diagnostics
+
+Several assumptions need to be made when creating regression models. It is important to understand them to assess the model that is built, leverage the results and to identify outliers.
+
+```{r warning=FALSE, results="hide", output = FALSE, message=FALSE}
+if (!require("dplyr")) install.packages("dplyr")
+library(dplyr)
+library(nycflights13)
+library(tidyverse)
+if (!require("magrittr")) install.packages("magrittr")
+library(magrittr)
+if (!require("lmtest")) install.packages("lmtest")
+library(lmtest)
+```
+
+Checking Assumptions
+
+Three simulated models are used to check the assumption of regression models
+
+```{r}
+sim_1 = function(sample_size = 500) {
+  x = runif(n = sample_size) * 5
+  y = 3 + 5 * x + rnorm(n = sample_size, mean = 0, sd = 1)
+  data.frame(x, y)
+}
+
+sim_2 = function(sample_size = 500) {
+  x = runif(n = sample_size) * 5
+  y = 3 + 5 * x + rnorm(n = sample_size, mean = 0, sd = x)
+  data.frame(x, y)
+}
+
+sim_3 = function(sample_size = 500) {
+  x = runif(n = sample_size) * 5
+  y = 3 + 5 * x ^ 2 + rnorm(n = sample_size, mean = 0, sd = 5)
+  data.frame(x, y)
+}
+```
+
+Fitted versus Residuals Plot
+
+This is one of the most useful plots to check linearity and constant variance assumptions.
+
+```{r}
+set.seed(42)
+sim_data_1 = sim_1()
+head(sim_data_1)
+```
+
+The model is fitted and added to the scatterplot.
+
+```{r}
+plot(y ~ x, data = sim_data_1, col = "grey", pch = 20,
+     main = "Data from Model 1")
+fit_1 = lm(y ~ x, data = sim_data_1)
+abline(fit_1, col = "darkorange", lwd = 3)
+```
+
+A fitter versus residual plot is plotted on the model
+
+```{r}
+plot(fitted(fit_1), resid(fit_1), col = "grey", pch = 20,
+     xlab = "Fitted", ylab = "Residuals", main = "Data from Model 1")
+abline(h = 0, col = "darkorange", lwd = 2)
+```
+
+The mean of the residuals is roughly zero validating linearity assumption, and the spread of residuals is roughly uniform validating constant variance assumption.
+
+Model 2 is created as an example of non-constant variation. 
+
+```{r}
+set.seed(42)
+sim_data_2 = sim_2()
+fit_2 = lm(y ~ x, data = sim_data_2)
+plot(y ~ x, data = sim_data_2, col = "grey", pch = 20,
+     main = "Data from Model 2")
+abline(fit_2, col = "darkorange", lwd = 3)
+```
+
+The fitted versus residuals plot is created for the new model.
+
+```{r}
+plot(fitted(fit_2), resid(fit_2), col = "grey", pch = 20,
+     xlab = "Fitted", ylab = "Residuals", main = "Data from Model 2")
+abline(h = 0, col = "darkorange", lwd = 2)
+```
+
+The mean of residuals is zero validating linearity assumption but the spread of residuals is not uniform. 
+
+Model 3 is created as an example of when Y is not a linear combination of all the predictor variables.
+
+```{r}
+set.seed(42)
+sim_data_3 = sim_3()
+fit_3 = lm(y ~ x, data = sim_data_3)
+plot(y ~ x, data = sim_data_3, col = "grey", pch = 20,
+     main = "Data from Model 3")
+abline(fit_3, col = "darkorange", lwd = 3)
+```
+
+The fitted versus residual plot is created for this model.
+
+```{r}
+plot(fitted(fit_3), resid(fit_3), col = "grey", pch = 20,
+     xlab = "Fitted", ylab = "Residuals", main = "Data from Model 3")
+abline(h = 0, col = "darkorange", lwd = 2)
+```
+
+Breusch-Pagan Test
+
+It is a test for constant variance which is also called as homoscedasticity. Non-constant variance is called heteroscedasticity.
+
+```{r}
+bptest(fit_1)
+```
+
+Due to a large p-value, null of homoscedasticity is not rejected.
+
+```{r}
+bptest(fit_2)
+```
+
+Due to a small p-value, null of homoscedasticity is  rejected.
+
+```{r}
+bptest(fit_3)
+```
+
+Due to a large p-value, null of homoscedasticity is not rejected.
+
+Histograms
+
+Histograms can be used to assess normality assumption.
+
+```{r}
+par(mfrow = c(1, 3))
+hist(resid(fit_1),
+     xlab   = "Residuals",
+     main   = "Histogram of Residuals, fit_1",
+     col    = "darkorange",
+     border = "dodgerblue",
+     breaks = 20)
+hist(resid(fit_2),
+     xlab   = "Residuals",
+     main   = "Histogram of Residuals, fit_2",
+     col    = "darkorange",
+     border = "dodgerblue",
+     breaks = 20)
+hist(resid(fit_3),
+     xlab   = "Residuals",
+     main   = "Histogram of Residuals, fit_3",
+     col    = "darkorange",
+     border = "dodgerblue",
+     breaks = 20)
+```
+
+fit1 is normal. fit2 is unclear. fit3 is not normal.
+
+Q-Q Plots
+
+Quantitle-Quantile plots are also used for checking normality.
+
+```{r}
+qqnorm(resid(fit_1), main = "Normal Q-Q Plot, fit_1", col = "darkgrey")
+qqline(resid(fit_1), col = "dodgerblue", lwd = 2)
+```
+
+This is the function that creates the Q-Q plot.
+
+```{r}
+qq_plot = function(e) {
+
+  n = length(e)
+  normal_quantiles = qnorm(((1:n - 0.5) / n))
+  # normal_quantiles = qnorm(((1:n) / (n + 1)))
+
+  # plot theoretical verus observed quantiles
+  plot(normal_quantiles, sort(e),
+       xlab = c("Theoretical Quantiles"),
+       ylab = c("Sample Quantiles"),
+       col = "darkgrey")
+  title("Normal Q-Q Plot")
+
+  # calculate line through the first and third quartiles
+  slope     = (quantile(e, 0.75) - quantile(e, 0.25)) / (qnorm(0.75) - qnorm(0.25))
+  intercept = quantile(e, 0.25) - slope * qnorm(0.25)
+
+  # add to existing plot
+  abline(intercept, slope, lty = 2, lwd = 2, col = "dodgerblue")
+}
+#We can then verify that it is essentially equivalent to using qqnorm() and qqline() in R.
+
+set.seed(420)
+x = rnorm(100, mean = 0 , sd = 1)
+par(mfrow = c(1, 2))
+qqnorm(x, col = "darkgrey")
+qqline(x, lty = 2, lwd = 2, col = "dodgerblue")
+qq_plot(x)
+
+```
+
+Several simulations are performed and Q-Q plots are created to examine the closeto the line plots.
+
+```{r}
+par(mfrow = c(1, 3))
+set.seed(420)
+qq_plot(rnorm(10))
+qq_plot(rnorm(25))
+qq_plot(rnorm(100))
+```
+
+The data is simulated from a t distribution with a small degree of freedom.
+
+```{r}
+par(mfrow = c(1, 3))
+set.seed(420)
+qq_plot(rt(10, df = 4))
+qq_plot(rt(25, df = 4))
+qq_plot(rt(100, df = 4))
+
+```
+
+Next, data is simulated from an exponential distribution.
+
+```{r}
+par(mfrow = c(1, 3))
+set.seed(420)
+qq_plot(rexp(10))
+qq_plot(rexp(25))
+qq_plot(rexp(100))
+```
+
+Q-Q plots are created to assess normality of errors.
+
+```{r}
+qqnorm(resid(fit_1), main = "Normal Q-Q Plot, fit_1", col = "darkgrey")
+qqline(resid(fit_1), col = "dodgerblue", lwd = 2)
+```
+
+fit_1 is perfect Q-Q plot and the errors probably follow a normal distribution.
+
+```{r}
+qqnorm(resid(fit_2), main = "Normal Q-Q Plot, fit_2", col = "darkgrey")
+qqline(resid(fit_2), col = "dodgerblue", lwd = 2)
+```
+
+fit_2 is a suspect Q-Q plot and the errors do not really follow a normal distribution.
+
+```{r}
+qqnorm(resid(fit_3), main = "Normal Q-Q Plot, fit_3", col = "darkgrey")
+qqline(resid(fit_3), col = "dodgerblue", lwd = 2)
+```
+fit_3 is a suspect Q-Q plot and the errors do not really follow a normal distribution.
+
+Shapiro-Wilk Test
+
+This is common test to test residual distributions.
+
+```{r}
+set.seed(42)
+shapiro.test(rnorm(25))
+
+```
+
+
+```{r}
+shapiro.test(rexp(25))
+```
+
+The test is run on the three models
+```{r}
+shapiro.test(resid(fit_1))
+shapiro.test(resid(fit_2))
+shapiro.test(resid(fit_3))
+```
+
+Unusual Observation
+
+Sometimes a small number of observations can have a very large influence on the regression model and could lead to violation of the regression assumptions. Three models are created to examine this situation.
+
+```{r}
+par(mfrow = c(1, 3))
+set.seed(42)
+ex_data  = data.frame(x = 1:10,
+                      y = 10:1 + rnorm(n = 10))
+ex_model = lm(y ~ x, data = ex_data)
+
+# low leverage, large residual, small influence
+point_1 = c(5.4, 11)
+ex_data_1 = rbind(ex_data, point_1)
+model_1 = lm(y ~ x, data = ex_data_1)
+plot(y ~ x, data = ex_data_1, cex = 2, pch = 20, col = "grey",
+     main = "Low Leverage, Large Residual, Small Influence")
+points(x = point_1[1], y = point_1[2], pch = 1, cex = 4, col = "black", lwd = 2)
+abline(ex_model, col = "dodgerblue", lwd = 2)
+abline(model_1, lty = 2, col = "darkorange", lwd = 2)
+legend("bottomleft", c("Original Data", "Added Point"),
+       lty = c(1, 2), col = c("dodgerblue", "darkorange"))
+
+# high leverage, small residual, small influence
+point_2 = c(18, -5.7)
+ex_data_2 = rbind(ex_data, point_2)
+model_2 = lm(y ~ x, data = ex_data_2)
+plot(y ~ x, data = ex_data_2, cex = 2, pch = 20, col = "grey",
+     main = "High Leverage, Small Residual, Small Influence")
+points(x = point_2[1], y = point_2[2], pch = 1, cex = 4, col = "black", lwd = 2)
+abline(ex_model, col = "dodgerblue", lwd = 2)
+abline(model_2, lty = 2, col = "darkorange", lwd = 2)
+legend("bottomleft", c("Original Data", "Added Point"),
+       lty = c(1, 2), col = c("dodgerblue", "darkorange"))
+
+# high leverage, large residual, large influence
+point_3 = c(14, 5.1)
+ex_data_3 = rbind(ex_data, point_3)
+model_3 = lm(y ~ x, data = ex_data_3)
+plot(y ~ x, data = ex_data_3, cex = 2, pch = 20, col = "grey", ylim = c(-3, 12),
+     main = "High Leverage, Large Residual, Large Influence")
+points(x = point_3[1], y = point_3[2], pch = 1, cex = 4, col = "black", lwd = 2)
+abline(ex_model, col = "dodgerblue", lwd = 2)
+abline(model_3, lty = 2, col = "darkorange", lwd = 2)
+legend("bottomleft", c("Original Data", "Added Point"),
+       lty = c(1, 2), col = c("dodgerblue", "darkorange"))
+
+```
+
+The solid blue line representing the slope of the regression models for the ten original points.
+
+```{r}
+coef(ex_model)[2]
+```
+
+The point added to the first slop has a small effect and is recalculated
+
+```{r}
+coef(model_1)[2]
+```
+
+This point has a small influence with low leverage.
+
+Now the model added to the second plot's slope is calculated.
+```{r}
+coef(model_2)[2]
+```
+
+This has small influence with high leverage and not being outlier.
+
+Now the model added to the third plot's slope is calculated.
+
+```{r}
+coef(model_3)[2]
+```
+This point is influential with high leverage and acting as outlier.
+
+Leverage
+
+Multivariate data is created to find leverages in R
+```{r}
+lev_ex = data.frame(
+  x1 = c(0, 11, 11, 7, 4, 10, 5, 8),
+  x2 = c(1, 5, 4, 3, 1, 4, 4, 2),
+  y  = c(11, 15, 13, 14, 0, 19, 16, 8))
+
+plot(x2 ~ x1, data = lev_ex, cex = 2)
+points(7, 3, pch = 20, col = "red", cex = 2)
+```
+Leverages are calculated for the above data.
+
+```{r}
+X = cbind(rep(1, 8), lev_ex$x1, lev_ex$x2)
+H = X %*% solve(t(X) %*% X) %*% t(X)
+diag(H)
+sum(diag(H))
+```
+
+Alternate is to fit a regression model and use hatvalues.
+```{r}
+lev_fit = lm(y ~ ., data = lev_ex)
+hatvalues(lev_fit)
+coef(lev_fit)
+
+```
+Y value of the point is modified to 20 and leverage is examined.
+
+```{r}
+which.max(hatvalues(lev_fit))
+lev_ex[which.max(hatvalues(lev_fit)),]
+lev_ex_1 = lev_ex
+lev_ex_1$y[1] = 20
+lm(y ~ ., data = lev_ex_1)
+```
+
+There is large changes to the coefficient.
+The same thing is done by changing y to 30.
+
+```{r}
+which.min(hatvalues(lev_fit))
+lev_ex[which.min(hatvalues(lev_fit)),]
+lev_ex_2 = lev_ex
+lev_ex_2$y[4] = 30
+lm(y ~ ., data = lev_ex_2)
+```
+
+The coefficient has not changed much and only intercept has changed.
+
+```{r}
+mean(lev_ex$x1)
+mean(lev_ex$x2)
+lev_ex[4,]
+```
+This point appears to be the mean for both. 
+The plots are recreated after adding the new point.
+
+```{r}
+hatvalues(model_1)
+hatvalues(model_2)
+hatvalues(model_3)
+
+```
+It is checked to see if any of them are large.
+
+```{r}
+hatvalues(model_1) > 2 * mean(hatvalues(model_1))
+hatvalues(model_2) > 2 * mean(hatvalues(model_2))
+hatvalues(model_3) > 2 * mean(hatvalues(model_3))
+```
+
+In the second and third plot, the added point has an influence.
+
+Residuals are calculated for all the plots. The 11th added point is a large standardized residual. 
+
+```{r}
+resid(model_1)
+rstandard(model_1)
+rstandard(model_1)[abs(rstandard(model_1)) > 2]
+```
+
+No points have large standardized residual here.
+
+```{r}
+resid(model_2)
+rstandard(model_2)
+rstandard(model_2)[abs(rstandard(model_2)) > 2]
+```
+
+The added point is a large standardized residual.
+```{r}
+resid(model_3)
+rstandard(model_3)
+rstandard(model_3)[abs(rstandard(model_3)) > 2]
+```
+
+Cook's distance can be used to calculate the observations with large influence which are usually outliers.
+
+Check if the added point has influence on the models
+```{r}
+cooks.distance(model_1)[11] > 4 / length(cooks.distance(model_1))
+```
+
+```{r}
+cooks.distance(model_2)[11] > 4 / length(cooks.distance(model_2))
+```
+
+```{r}
+cooks.distance(model_3)[11] > 4 / length(cooks.distance(model_3))
+```
+
+In model 3, the added point has high leverage and large residual and is influential.
+
+Additional Example using mtcars dataset
+Model is fitted and plotted. There is no obvious pattern.
+
+```{r}
+mpg_hp_add = lm(mpg ~ hp + am, data = mtcars)
+plot(fitted(mpg_hp_add), resid(mpg_hp_add), col = "grey", pch = 20,
+     xlab = "Fitted", ylab = "Residual",
+     main = "mtcars: Fitted versus Residuals")
+abline(h = 0, col = "darkorange", lwd = 2)
+```
+
+BP test is performed and it validates the residual uniformity.
+
+```{r}
+bptest(mpg_hp_add)
+```
+
+Q-Q plot also looks good.
+
+```{r}
+qqnorm(resid(mpg_hp_add), col = "darkgrey")
+qqline(resid(mpg_hp_add), col = "dodgerblue", lwd = 2)
+```
+
+Shapiro-Wilk test also looks good.
+
+```{r}
+shapiro.test(resid(mpg_hp_add))
+```
+
+hatvalues show two points of leverage.
+```{r}
+sum(hatvalues(mpg_hp_add) > 2 * mean(hatvalues(mpg_hp_add)))
+```
+
+There is one point with large residual.
+```{r}
+sum(abs(rstandard(mpg_hp_add)) > 2)
+```
+
+Two points are influential.
+```{r}
+cd_mpg_hp_add = cooks.distance(mpg_hp_add)
+sum(cd_mpg_hp_add > 4 / length(cd_mpg_hp_add))
+
+```
+
+These are the two influential cars.
+```{r}
+large_cd_mpg = cd_mpg_hp_add > 4 / length(cd_mpg_hp_add)
+cd_mpg_hp_add[large_cd_mpg]
+```
+
+The diagnostics are fair. It is still checked whether removing these points will change coefficients.
+```{r}
+coef(mpg_hp_add)
+mpg_hp_add_fix = lm(mpg ~ hp + am,
+                    data = mtcars,
+                    subset = cd_mpg_hp_add <= 4 / length(cd_mpg_hp_add))
+coef(mpg_hp_add_fix)
+```
+
+
+There is not lot of change.
+
+```{r}
+par(mfrow = c(2, 2))
+plot(mpg_hp_add)
+```
+
+The same steps are repeated on autompg dataset and big_model regression is created.
+
+```{r}
+str(autompg)
+big_model = lm(mpg ~ disp * hp * domestic, data = autompg)
+```
+
+Q-Q plot is created.
+
+```{r}
+qqnorm(resid(big_model), col = "darkgrey")
+qqline(resid(big_model), col = "dodgerblue", lwd = 2)
+```
+
+Shapiro-Wilk test is performed.
+
+Both Q-Q plot and shapiro test show that normality assumption is violated.
+```{r}
+shapiro.test(resid(big_model))
+```
+
+There are 31 troublesome observations.
+```{r}
+big_mod_cd = cooks.distance(big_model)
+sum(big_mod_cd > 4 / length(big_mod_cd))
+```
+
+The point are removed and model is recreated.
+```{r}
+big_model_fix = lm(mpg ~ disp * hp * domestic,
+                   data = autompg,
+                   subset = big_mod_cd < 4 / length(big_mod_cd))
+qqnorm(resid(big_model_fix), col = "grey")
+qqline(resid(big_model_fix), col = "dodgerblue", lwd = 2)
+```
+
+Shapiro test is performed on the updated model.
+```{r}
+shapiro.test(resid(big_model_fix))
+```
+
+Now the issues with normality are fixed.
+
