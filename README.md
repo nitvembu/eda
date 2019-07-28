@@ -34,5 +34,6 @@ Source: https://uc-r.github.io/kmeans_clustering, https://uc-r.github.io/hc_clus
 10. Principal Component Analysis.Rmd : Finally, the variation in the dataset with several variables can be viewed with the help of principal component analysis (PCA). The steps to perform PCA and visualize the results are covered here.
 Source: https://www.datacamp.com/community/tutorials/pca-analysis-r
 
-11. 
+11. Model Diagnostics.Rmd : When regression models are created to do advance analysis on the data, there are always some underlying assumptions made. This file covers assessment of model assumptions and identification of outliers.
+Source: http://daviddalpiaz.github.io/appliedstats/model-diagnostics.html#unusual-observations
 
